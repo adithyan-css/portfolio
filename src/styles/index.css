@@ -1,0 +1,353 @@
+@import 'tailwindcss';
+
+/*
+ * NOISE → SIGNAL
+ * Colour tokens are RGB triplets so the page can be *filtered* from the dark
+ * "noise" world into the light "lab" world by scroll (ThemeDriver writes the
+ * interpolated values on :root). Instrument screens re-scope the same tokens,
+ * so every component works unchanged inside a dark screen on a light page.
+ */
+/* inline: utilities emit rgb(var(--c-*)) directly, so scoped tokens (.screen/.lab/.noise) resolve per element */
+@theme inline {
+  --color-ink: rgb(var(--c-bg));
+  --color-ink-2: rgb(var(--c-bg2));
+  --color-fg: rgb(var(--c-fg));
+  --color-soft: rgb(var(--c-soft));
+  --color-mute: rgb(var(--c-mute));
+  --color-dim: rgb(var(--c-dim));
+  --color-line: rgb(var(--c-fg) / 0.1);
+  --color-line-2: rgb(var(--c-fg) / 0.2);
+  --color-signal: rgb(var(--c-accent));
+  --color-signal-dim: rgb(var(--c-accent) / 0.14);
+  --color-on-signal: rgb(var(--c-on-accent));
+  --color-alarm: rgb(var(--c-alarm));
+}
+
+@theme {
+  --font-sans: 'Archivo Variable', 'Archivo', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'Martian Mono Variable', 'Martian Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+
+  --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-quart: cubic-bezier(0.76, 0, 0.24, 1);
+
+  --breakpoint-xs: 26rem;
+}
+
+:root {
+  /* noise (dark) — the default until the loop filters the page */
+  --c-bg: 7 8 11;
+  --c-bg2: 15 16 22;
+  --c-fg: 232 234 240;
+  --c-soft: 184 189 201;
+  --c-mute: 142 147 160;
+  --c-dim: 122 127 140;
+  --c-accent: 124 131 255;
+  /* text on a solid accent fill: ink on the bright dark-phase blue, white on the deep lab blue */
+  --c-on-accent: 7 8 11;
+  --c-alarm: 255 106 61;
+  --screen-accent: #7c83ff;
+  --screen-alarm: #ff6a3d;
+  --grain: 0.06;
+  --gutter: clamp(1rem, 4vw, 3.5rem);
+  --nav-h: 64px;
+  color-scheme: dark;
+}
+@media (max-width: 899px) {
+  :root {
+    --nav-h: 105px;
+  }
+}
+
+.noise {
+  --c-bg: 7 8 11;
+  --c-bg2: 15 16 22;
+  --c-fg: 232 234 240;
+  --c-soft: 184 189 201;
+  --c-mute: 142 147 160;
+  --c-dim: 122 127 140;
+  --c-accent: 124 131 255;
+  --c-on-accent: 7 8 11;
+}
+
+.lab {
+  --c-bg: 231 232 228;
+  --c-bg2: 221 222 217;
+  --c-fg: 12 13 16;
+  --c-soft: 40 42 48;
+  --c-mute: 86 89 97;
+  --c-dim: 92 95 103;
+  --c-accent: 38 50 240;
+  --c-on-accent: 255 255 255;
+}
+
+/* Instrument screens: always dark, always the bright signal blue. */
+.screen {
+  --c-bg: 10 11 16;
+  --c-bg2: 19 20 28;
+  --c-fg: 232 234 240;
+  --c-soft: 190 195 206;
+  --c-mute: 146 152 166;
+  --c-dim: 116 122 136;
+  --c-accent: 124 131 255;
+  --c-on-accent: 7 8 11;
+  --c-alarm: 255 106 61;
+  background: rgb(var(--c-bg));
+  color: rgb(var(--c-fg));
+  border-radius: 14px;
+  border: 1px solid rgb(255 255 255 / 0.07);
+  box-shadow:
+    0 0 0 1px rgb(0 0 0 / 0.35),
+    inset 0 1px 0 rgb(255 255 255 / 0.05),
+    0 50px 90px -50px rgb(6 8 24 / 0.65);
+  color-scheme: dark;
+}
+
+/* Konami → oscilloscope mode: phosphor green everywhere */
+:root[data-mode='scope'] {
+  --screen-accent: #6dffb0;
+}
+:root[data-mode='scope'] .screen,
+:root[data-mode='scope'] .noise {
+  --c-accent: 109 255 176;
+}
+:root[data-mode='scope'] .lab {
+  --c-accent: 0 150 80;
+  --c-on-accent: 255 255 255;
+}
+
+@layer base {
+  html {
+    background: rgb(var(--c-bg));
+    color: rgb(var(--c-fg));
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    scrollbar-color: rgb(var(--c-fg) / 0.25) rgb(var(--c-bg));
+  }
+  body {
+    font-family: var(--font-sans);
+    background: rgb(var(--c-bg));
+    color: rgb(var(--c-fg));
+    overflow-x: clip;
+    font-stretch: 100%;
+  }
+  ::selection {
+    background: rgb(var(--c-accent));
+    color: rgb(var(--c-on-accent));
+  }
+  :focus-visible {
+    outline: 2px solid rgb(var(--c-accent));
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+  button {
+    cursor: pointer;
+  }
+  button:disabled {
+    cursor: not-allowed;
+  }
+  img,
+  canvas,
+  svg {
+    display: block;
+  }
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+  p {
+    text-wrap: pretty;
+  }
+}
+
+/* Custom cursor hides the native one only once JS confirms a fine pointer. */
+html.has-cursor,
+html.has-cursor * {
+  cursor: none !important;
+}
+html.has-cursor input:not([type='range']),
+html.has-cursor textarea,
+html.has-cursor [contenteditable='true'] {
+  cursor: text !important;
+}
+
+/* ───────────────────────── Utilities ───────────────────────── */
+@utility container-x {
+  width: 100%;
+  max-width: 1480px;
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+/* Instrument silkscreen: condensed mono caps */
+@utility label-mono {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-stretch: 85%;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgb(var(--c-mute));
+}
+
+@utility mono {
+  font-family: var(--font-mono);
+  font-stretch: 85%;
+}
+
+/* Display: heavy Archivo whose *width* carries meaning */
+@utility display {
+  font-weight: 760;
+  letter-spacing: -0.035em;
+  line-height: 0.86;
+}
+@utility wd-xc {
+  font-stretch: 62%;
+}
+@utility wd-c {
+  font-stretch: 78%;
+}
+@utility wd-n {
+  font-stretch: 100%;
+}
+@utility wd-sx {
+  font-stretch: 112%;
+}
+@utility wd-x {
+  font-stretch: 125%;
+}
+
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Film grain that reads on both grounds */
+.grain {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  opacity: var(--grain);
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+
+/* Oscilloscope-mode scanlines */
+:root[data-mode='scope'] .scanlines {
+  display: block;
+}
+.scanlines {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 61;
+  pointer-events: none;
+  background: repeating-linear-gradient(to bottom, rgb(0 0 0 / 0) 0 2px, rgb(0 0 0 / 0.18) 2px 3px);
+}
+
+/* Link underline that draws in */
+.link-u {
+  background-image: linear-gradient(currentColor, currentColor);
+  background-size: 0% 1px;
+  background-repeat: no-repeat;
+  background-position: 100% 100%;
+  transition: background-size 0.5s var(--ease-expo);
+}
+.link-u:hover,
+.link-u:focus-visible {
+  background-size: 100% 1px;
+  background-position: 0% 100%;
+}
+
+/* Ruler ticks — a recurring instrument detail */
+.ticks {
+  background-image: repeating-linear-gradient(90deg, rgb(var(--c-fg) / 0.35) 0 1px, transparent 1px 8px);
+  background-size: 100% 5px;
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+}
+.ticks-major {
+  background-image:
+    repeating-linear-gradient(90deg, rgb(var(--c-fg) / 0.45) 0 1px, transparent 1px 40px),
+    repeating-linear-gradient(90deg, rgb(var(--c-fg) / 0.22) 0 1px, transparent 1px 8px);
+  background-size:
+    100% 9px,
+    100% 4px;
+  background-repeat: no-repeat;
+  background-position:
+    0 100%,
+    0 100%;
+}
+
+/* Range inputs used by instrument panels */
+input[type='range'].range {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  height: 18px;
+  background: transparent;
+}
+input[type='range'].range::-webkit-slider-runnable-track {
+  height: 2px;
+  background: linear-gradient(90deg, rgb(var(--c-accent)) 0 var(--fill, 50%), rgb(var(--c-fg) / 0.2) var(--fill, 50%) 100%);
+}
+input[type='range'].range::-moz-range-track {
+  height: 2px;
+  background: rgb(var(--c-fg) / 0.2);
+}
+input[type='range'].range::-moz-range-progress {
+  height: 2px;
+  background: rgb(var(--c-accent));
+}
+input[type='range'].range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 10px;
+  height: 16px;
+  margin-top: -7px;
+  border-radius: 2px;
+  background: rgb(var(--c-fg));
+  border: 0;
+}
+input[type='range'].range::-moz-range-thumb {
+  width: 10px;
+  height: 16px;
+  border-radius: 2px;
+  background: rgb(var(--c-fg));
+  border: 0;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+.caret {
+  animation: blink 1.05s steps(1) infinite;
+}
+
+@keyframes led {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+.live-dot {
+  animation: led 1.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

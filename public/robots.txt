@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://adithyan-css.github.io/sitemap.xml
